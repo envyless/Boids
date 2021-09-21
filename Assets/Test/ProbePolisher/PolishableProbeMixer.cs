@@ -52,53 +52,6 @@ public class PolishableProbeMixer : MonoBehaviour
 
     void Update ()
     {
-        // Do nothing if nothing was changed.
-        if (mix == prevMix && intensity == prevIntensity && skyboxIntensity == prevSkyboxIntensity) return;
-
-        if (probe == null)
-        {
-            // Clone the first probe and set it to the scene.
-            probe = Instantiate(sourceProbes[0]) as LightProbes;
-            LightmapSettings.lightProbes = probe;
-        }
-
-        if (updateSkybox && skybox == null)
-        {
-            // Make a empty skybox and set it to the scene.
-            skybox = ProbePolisher.NewSkyboxMaterial(null);
-            RenderSettings.skybox = skybox;
-        }
-
-        // Clamp the mixing position.
-        mix = Mathf.Clamp(mix, 0.0f, 1.0f * (sourceProbes.Length - 1));
-
-        // Choose two probes to mix.
-        var mixIndex = Mathf.FloorToInt(mix);
-        if (mixIndex == sourceProbes.Length - 1) mixIndex--;
-
-        var source1 = ProbePolisher.NewVectorArrayFromCoeffs(sourceProbes[mixIndex + 0].coefficients, 27 * 2);
-        var source2 = ProbePolisher.NewVectorArrayFromCoeffs(sourceProbes[mixIndex + 1].coefficients, 27 * 2);
-
-        // Mix the two probes.
-        var coeffs = new Vector3[9];
-        var mixRate = mix - mixIndex;
-        for (var i = 0; i < 9; i++)
-            coeffs[i] = Vector3.Lerp(source1[i], source2[i], mixRate) * intensity;
-
-        // Update the probe with the mixed coefficients.
-        var temp = probe.coefficients;
-        ProbePolisher.UpdateCoeffsWithVectorArray(temp, coeffs);
-        probe.coefficients = temp;
-
-        // Update the skybox if needed.
-        if (updateSkybox && skybox != null)
-        {
-            ProbePolisher.UpdateSkyboxMaterial(skybox, coeffs);
-            skybox.SetFloat("_Intensity", skyboxIntensity);
-        }
-
-        prevMix = mix;
-        prevIntensity = intensity;
-        prevSkyboxIntensity = skyboxIntensity;
+       
     }
 }

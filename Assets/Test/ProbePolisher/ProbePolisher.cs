@@ -74,21 +74,6 @@ public static class ProbePolisher
     // Reset the polishable probe (only when it's needed).
     public static void ResetPolisherIfNeeded(LightProbes probes)
     {
-        var coeffs = probes.coefficients;
-        if (coeffs[27] > -9.0f)
-        {
-            coeffs[27] = -10.0f;   // Initialization flag
-            coeffs[28] = 1.0f;     // Base Intensity
-            coeffs[29] = 0.0f;     // Sky Intensity
-            coeffs[30] = 0.9f;     // Sky Color 1
-            coeffs[31] = 1.0f;
-            coeffs[32] = 1.0f;
-            coeffs[33] = 1.0f;     // Sky Color 2
-            coeffs[34] = 1.0f;
-            coeffs[35] = 0.9f;
-            coeffs[36] = 0.0f;     // Y-Axis Rotation
-            probes.coefficients = coeffs;
-        }
     }
 
     // Create a skybox material from a polishable probe.

@@ -23,6 +23,8 @@
 
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using Unity.Collections;
 
 public class BoidController : MonoBehaviour
 {
@@ -46,6 +48,9 @@ public class BoidController : MonoBehaviour
 
     public LayerMask searchLayer;
 
+    public bool IsJob = false;
+    List<BoidBehaviour> boids = new List<BoidBehaviour>();
+
     void Start()
     {
         for (var i = 0; i < spawnCount; i++) Spawn();
@@ -60,7 +65,34 @@ public class BoidController : MonoBehaviour
     {
         var rotation = Quaternion.Slerp(transform.rotation, Random.rotation, 0.3f);
         var boid = Instantiate(boidPrefab, position, rotation) as GameObject;
-        boid.GetComponent<BoidBehaviour>().controller = this;
+        var boidCompo = boid.GetComponent<BoidBehaviour>();
+        boidCompo.controller = this;
+        boids.Add(boidCompo);
         return boid;
+    }
+
+    public void Update()
+    {
+        if (IsJob && !Boids.isRequested)
+        {
+            StartCoroutine(Boids.RequestJob(boids, OnCompleteResult, this));
+        }
+    }
+
+    private void OnCompleteResult(NativeArray<Boids.BoidResult> results)
+    {
+        
+        for(int i = 0; i < results.Length; ++i)
+        {            
+            var result = results[i];
+            var boid = boids[i];
+            
+            boid.UpdateBySimulateResult(result);
+        }
+    }
+
+    private void LateUpdate()
+    {
+        
     }
 }

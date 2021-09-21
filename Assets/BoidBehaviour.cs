@@ -53,8 +53,12 @@ public class BoidBehaviour : MonoBehaviour
             animator.speed = Random.Range(-1.0f, 1.0f) * animationSpeedVariation + 1.0f;
     }
 
+    Collider [] nearbyBoids = new Collider[30];
     void Update()
     {
+        if (controller.IsJob)
+            return;
+
         var currentPosition = transform.position;
         var currentRotation = transform.rotation;
 
@@ -67,20 +71,27 @@ public class BoidBehaviour : MonoBehaviour
         var alignment = controller.transform.forward;
         var cohesion = controller.transform.position;
 
-        // Looks up nearby boids.
-        var nearbyBoids = Physics.OverlapSphere(currentPosition, controller.neighborDist, controller.searchLayer);
+        // Looks up nearby boids
+        var nearCount = Physics.OverlapSphereNonAlloc(currentPosition, controller.neighborDist, nearbyBoids);
+        if (nearCount == 0)
+            nearCount = 1;
 
+        int inc = 0;
         // Accumulates the vectors.
         foreach (var boid in nearbyBoids)
         {
+            inc++;
             if (boid.gameObject == gameObject) continue;
             var t = boid.transform;
             separation += GetSeparationVector(t);
             alignment += t.forward;
             cohesion += t.position;
+
+            if (inc >= nearCount)
+                break;
         }
 
-        var avg = 1.0f / nearbyBoids.Length;
+        var avg = 1.0f / nearCount;
         alignment *= avg;
         cohesion *= avg;
         cohesion = (cohesion - currentPosition).normalized;
@@ -95,6 +106,29 @@ public class BoidBehaviour : MonoBehaviour
             var ip = Mathf.Exp(-controller.rotationCoeff * Time.deltaTime);
             transform.rotation = Quaternion.Slerp(rotation, currentRotation, ip);
         }
+
+        // Moves forawrd.
+        transform.position = currentPosition + transform.forward * (velocity * Time.deltaTime);
+    }
+
+    public void UpdateBySimulateResult(in Boids.BoidResult result)
+    {
+        // Calculates a rotation from the vectors.
+        var tempDirFloat = result.separation + result.alignment + result.cohesion;
+        var direction = new Vector3(tempDirFloat.x, tempDirFloat.y, tempDirFloat.z);
+        var rotation = Quaternion.FromToRotation(Vector3.forward, direction.normalized);
+
+        var currentPosition = transform.position;
+        var currentRotation = transform.rotation;
+        // Applys the rotation with interpolation.
+        if (rotation != currentRotation)
+        {
+            var ip = Mathf.Exp(-controller.rotationCoeff * Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(rotation, currentRotation, ip);
+        }
+        // Current velocity randomized with noise.
+        var noise = Mathf.PerlinNoise(Time.time, noiseOffset) * 2.0f - 1.0f;
+        var velocity = controller.velocity * (1.0f + noise * controller.velocityVariation);
 
         // Moves forawrd.
         transform.position = currentPosition + transform.forward * (velocity * Time.deltaTime);
